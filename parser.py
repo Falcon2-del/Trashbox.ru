@@ -2,6 +2,7 @@ import os
 import requests
 from bs4 import BeautifulSoup
 import smtplib
+import time
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
@@ -27,6 +28,8 @@ def send_email(subject, html_content):
         server.send_message(msg)
         server.quit()
         print(f"Письмо отправлено: {subject}")
+        # Интервал 2 секунды между письмами
+        time.sleep(2)
     except Exception as e:
         print(f"Ошибка при отправке: {e}")
 
@@ -37,7 +40,6 @@ def parse_trashbox():
     soup = BeautifulSoup(response.text, 'html.parser')
     
     # Находим все ссылки на новости
-    # На Trashbox новости обычно находятся в блоках с классом 'topic_p' или внутри контента
     links = soup.select('a.topic_p_title')
     
     if not links:
@@ -53,11 +55,11 @@ def parse_trashbox():
     
     title = news_soup.find('h1').get_text(strip=True)
     
-    # Ищем основной контент новости (обычно в блоке с id 'topic_content')
+    # Ищем основной контент новости
     content_div = news_soup.find('div', id='topic_content')
     
     if content_div:
-        # Очищаем от лишних скриптов или рекламы, если нужно
+        # Очищаем от лишних скриптов или рекламы
         for s in content_div(['script', 'style']):
             s.decompose()
         html_body = str(content_div)
