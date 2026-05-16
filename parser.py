@@ -3,15 +3,15 @@ import requests
 from bs4 import BeautifulSoup
 import smtplib
 import time
-from datetime import datetime
+import re
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-# Настройки из переменных окружения (GitHub Secrets)
+# Настройки из переменных окружения
 EMAIL_SENDER = os.environ.get('EMAIL_SENDER')
 EMAIL_PASSWORD = os.environ.get('EMAIL_PASSWORD')
 EMAIL_RECEIVER = os.environ.get('EMAIL_RECEIVER')
-SMTP_SERVER = "smtp.gmail.com"  # Например, для Gmail
+SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
 
 DB_FILE = "sent_urls.txt"
@@ -31,7 +31,6 @@ def send_email(subject, html_content):
     msg['From'] = EMAIL_SENDER
     msg['To'] = EMAIL_RECEIVER
     msg['Subject'] = f"Trashbox.ru: {subject}"
-    
     msg.attach(MIMEText(html_content, 'html'))
     
     try:
@@ -40,55 +39,70 @@ def send_email(subject, html_content):
         server.login(EMAIL_SENDER, EMAIL_PASSWORD)
         server.send_message(msg)
         server.quit()
-        print(f"Письмо отправлено: {subject}")
-        # Интервал 2 секунды между письмами
+        print(f"Письмо успешно отправлено: {subject}")
         time.sleep(2)
     except Exception as e:
-        print(f"Ошибка при отправке: {e}")
+        print(f"Ошибка при отправке почты: {e}")
 
 def parse_trashbox():
     url = "https://trashbox.ru/news"
-    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
+    # Расширенный User-Agent, чтобы сайт не блокировал GitHub хостинг
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3'
+    }
     
+    print("Запрашиваем главную страницу новостей...")
     try:
-        response = requests.get(url, headers=headers)
+        response = requests.get(url, headers=headers, timeout=15)
+        print(f"Статус ответа сайта: {response.status_code}")
         response.raise_for_status()
     except Exception as e:
-        print(f"Ошибка загрузки главной страницы: {e}")
+        print(f"Критическая ошибка загрузки сайта: {e}")
         return
 
     soup = BeautifulSoup(response.text, 'html.parser')
     
-    # Формируем шаблон ссылки на основе текущей даты: /link/YYYY-MM-DD
-    today_str = datetime.now().strftime("%Y-%m-%d")
-    date_pattern = f"/link/{today_str}"
-    print(f"Ищем новости с паттерном: {date_pattern}")
-
-    # Собираем все ссылки, которые ведут на новости за сегодня
+    # Регулярное выражение для поиска ссылок вида /link/YYYY-MM-DD-...
+    # Это полностью решает проблему с разницей часовых поясов
+    link_pattern = re.compile(r'/link/\d{4}-\d{2}-\d{2}')
+    
     valid_links = []
+    all_links_count = 0
+    
     for a in soup.find_all('a', href=True):
+        all_links_count += 1
         href = a['href']
-        if date_pattern in href:
-            # Приводим к полному URL, если ссылка относительная
+        if link_pattern.search(href):
             full_url = href if href.startswith('http') else "https://trashbox.ru" + href
             if full_url not in valid_links:
                 valid_links.append(full_url)
 
+    print(f"Всего тегов ла ссылки на странице: {all_links_count}")
+    print(f"Найдено подходящих новостных ссылок: {len(valid_links)}")
+
     if not valid_links:
-        print("Новых новостей за сегодня не найдено.")
+        print("Список новостей пуст. Возможно, сайт изменил структуру или заблокировал запрос.")
+        # Выведем кусочек кода страницы в лог для диагностики
+        print("Кусочек HTML для проверки:")
+        print(response.text[:1000])
         return
 
     sent_urls = load_sent_urls()
+    print(f"Уже было отправлено ранее: {len(sent_urls)} новостей.")
     
-    # Обрабатываем ссылки (разворачиваем список, чтобы старые шли первыми, а новые последними)
+    new_dispatched = 0
+    # Идем снизу вверх (от старых к самым свежим)
     for news_url in reversed(valid_links):
         if news_url in sent_urls:
-            continue  # Пропускаем, если уже отправляли
+            continue
 
-        print(f"Обработка новой новости: {news_url}")
+        print(f"Парсим новую статью: {news_url}")
+        new_dispatched += 1
         
         try:
-            news_res = requests.get(news_url, headers=headers)
+            news_res = requests.get(news_url, headers=headers, timeout=15)
             news_res.raise_for_status()
             news_soup = BeautifulSoup(news_res.text, 'html.parser')
             
@@ -104,12 +118,14 @@ def parse_trashbox():
             else:
                 html_body = "Не удалось извлечь содержимое новости."
 
-            # Отправляем и запоминаем
             send_email(title, html_body)
             save_sent_url(news_url)
             
         except Exception as e:
             print(f"Ошибка при обработке новости {news_url}: {e}")
+
+    if new_dispatched == 0:
+        print("Все найденные новости уже отправлялись ранее.")
 
 if __name__ == "__main__":
     parse_trashbox()
