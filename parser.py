@@ -17,23 +17,23 @@ SMTP_PORT = 587
 DB_FILE = "sent_urls.txt"
 
 def load_sent_urls():
-    """Загружает список уже отправленных URL из файла."""
     if os.path.exists(DB_FILE):
         with open(DB_FILE, "r", encoding="utf-8") as f:
-            # Очищаем от пробелов и пустых строк
             return set(line.strip() for line in f if line.strip())
     return set()
 
 def save_sent_url(url):
-    """Добавляет новый URL в файл базы данных."""
     with open(DB_FILE, "a", encoding="utf-8") as f:
         f.write(url.strip() + "\n")
 
 def send_email(subject, html_content):
+    # Очищаем заголовок от лишних переносов строк и пробелов
+    clean_subject = " ".join(subject.split())
+    
     msg = MIMEMultipart()
     msg['From'] = EMAIL_SENDER
     msg['To'] = EMAIL_RECEIVER
-    msg['Subject'] = f"Trashbox.ru: {subject}"
+    msg['Subject'] = f"Trashbox.ru: {clean_subject}"
     msg.attach(MIMEText(html_content, 'html'))
     
     try:
@@ -42,7 +42,7 @@ def send_email(subject, html_content):
         server.login(EMAIL_SENDER, EMAIL_PASSWORD)
         server.send_message(msg)
         server.quit()
-        print(f"Письмо успешно отправлено: {subject}")
+        print(f"Письмо успешно отправлено: {clean_subject}")
         time.sleep(2)
     except Exception as e:
         print(f"Ошибка при отправке почты: {e}")
@@ -51,7 +51,6 @@ def parse_trashbox():
     url = "https://trashbox.ru/news"
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
     }
     
     print("Запрашиваем главную страницу новостей...")
@@ -65,25 +64,28 @@ def parse_trashbox():
     soup = BeautifulSoup(response.text, 'html.parser')
     link_pattern = re.compile(r'/link/\d{4}-\d{2}-\d{2}')
     
-    # 1. Загружаем базу данных
     sent_urls = load_sent_urls()
     
-    # 2. Собираем только уникальные и новые ссылки
-    valid_links = []
+    # Собираем список уникальных ссылок с текущей страницы
+    found_links = []
     for a in soup.find_all('a', href=True):
         href = a['href'].strip()
         if link_pattern.search(href):
             full_url = href if href.startswith('http') else "https://trashbox.ru" + href
-            # Проверка на дубликаты внутри одного запуска и по базе данных
-            if full_url not in valid_links and full_url not in sent_urls:
-                valid_links.append(full_url)
+            # Важно: фильтруем дубликаты СРАЗУ при сборе ссылок
+            if full_url not in found_links and full_url not in sent_urls:
+                found_links.append(full_url)
 
-    print(f"Найдено новых новостей для отправки: {len(valid_links)}")
+    print(f"Найдено новых уникальных новостей: {len(found_links)}")
 
     new_dispatched = 0
-    # Идем от старых к новым
-    for news_url in reversed(valid_links):
-        print(f"Парсим новую статью: {news_url}")
+    # Используем reversed, чтобы сначала шли более старые новости, потом свежие
+    for news_url in reversed(found_links):
+        # Повторная проверка перед обработкой (на случай сбоев в цикле)
+        if news_url in sent_urls:
+            continue
+
+        print(f"Обработка: {news_url}")
         
         try:
             news_res = requests.get(news_url, headers=headers, timeout=15)
@@ -101,44 +103,42 @@ def parse_trashbox():
             )
             
             if content_div:
-                # Чистим комментарии и мусор
-                for trash in content_div.find_all(['div', 'section', 'form'], 
+                # Очистка контента (комментарии, формы, скрипты)
+                for trash in content_div.find_all(['div', 'section', 'form', 'script', 'style', 'iframe', 'ins'], 
                                                  id=re.compile(r'comments|comm_cont|reply_form'),
                                                  class_=re.compile(r'comments|comm_cont')):
                     trash.decompose()
                 
+                # Дополнительная чистка по тегам
                 for s in content_div(['script', 'style', 'iframe', 'ins', 'form']):
                     s.decompose()
                 
                 html_body = f"""
                 <html>
-                <head>
-                    <style>
-                        body {{ font-family: sans-serif; line-height: 1.6; color: #333; }}
-                        img {{ max-width: 100%; height: auto; display: block; margin: 10px 0; }}
-                        .source-link {{ margin-top: 20px; border-top: 1px solid #eee; padding-top: 10px; }}
-                    </style>
-                </head>
                 <body>
-                    {str(content_div)}
-                    <div class="source-link">
+                    <div style="font-family: sans-serif; line-height: 1.6; color: #333;">
+                        {str(content_div)}
+                        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
                         <p><a href="{news_url}">Читать оригинал на Trashbox.ru</a></p>
                     </div>
                 </body>
                 </html>
                 """
             else:
-                html_body = f"Контент не найден. <a href='{news_url}'>Читать на сайте</a>"
+                html_body = f"Контент не найден. <a href='{news_url}'>Перейти на сайт</a>"
 
             send_email(title, html_body)
+            
+            # Сразу добавляем в базу и локальный набор, чтобы не отправить повторно в этом же запуске
             save_sent_url(news_url)
+            sent_urls.add(news_url)
             new_dispatched += 1
             
         except Exception as e:
             print(f"Ошибка при обработке {news_url}: {e}")
 
     if new_dispatched == 0:
-        print("Новых новостей не обнаружено.")
+        print("Ничего нового для отправки.")
 
 if __name__ == "__main__":
     parse_trashbox()
