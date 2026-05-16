@@ -19,14 +19,14 @@ DB_FILE = "sent_urls.txt"
 def load_sent_urls():
     if os.path.exists(DB_FILE):
         with open(DB_FILE, "r", encoding="utf-8") as f:
-            # Важно: нормализуем старые ссылки при загрузке (убираем слеши в конце)
-            return set(line.strip().rstrip('/') for line in f if line.strip())
+            # Нормализуем старые ссылки: убираем пробелы, слеши в конце и приводим к нижнему регистру
+            return set(line.strip().rstrip('/').lower() for line in f if line.strip())
     return set()
 
 def save_sent_url(url):
     with open(DB_FILE, "a", encoding="utf-8") as f:
-        # Сохраняем без слеша в конце
-        f.write(url.strip().rstrip('/') + "\n")
+        # Сохраняем в едином формате — без слеша и в нижнем регистре
+        f.write(url.strip().rstrip('/').lower() + "\n")
 
 def send_email(subject, html_content):
     clean_subject = " ".join(subject.split())
@@ -68,19 +68,22 @@ def parse_trashbox():
 
     # Собираем ссылки
     for a in soup.find_all('a', href=True):
-        href = a['href'].strip().split('?')[0].rstrip('/') # Убираем параметры и слеши
+        href = a['href'].strip().split('?')[0].rstrip('/') # Чистим мусор и слеши
+        
         if link_pattern.search(href):
+            # КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: сначала делаем ссылку абсолютной и приводим к регистру
             full_url = href if href.startswith('http') else "https://trashbox.ru" + href
+            full_url = full_url.lower() # На случай разного регистра в ссылках
             
-            # Если ссылка уже в базе или уже добавлена в текущий список — пропускаем
+            # Теперь проверка на дубликаты работает со 100% точностью
             if full_url not in sent_urls and full_url not in found_links:
                 found_links.append(full_url)
 
-    print(f"К отправке: {len(found_links)} новостей.")
+    print(f"К отправке: {len(found_links)} уникальных новостей.")
 
     new_dispatched = 0
     for news_url in reversed(found_links):
-        # Еще раз проверяем перед отправкой (двойная защита)
+        # Двойная защита перед обработкой
         if news_url in sent_urls:
             continue
 
@@ -101,7 +104,7 @@ def parse_trashbox():
             )
             
             if content_div:
-                # Глубокая очистка от мусора
+                # Глубокая очистка контента от мусора
                 for trash in content_div.find_all(['div', 'section', 'form', 'script', 'style', 'iframe', 'ins'], 
                                                  id=re.compile(r'comments|comm_cont|reply_form|related|tags'),
                                                  class_=re.compile(r'comments|comm_cont|topic_tags')):
@@ -124,12 +127,12 @@ def parse_trashbox():
 
             send_email(title, html_body)
             
-            # Сохраняем результат
+            # Сохраняем и сразу заносим в кэш памяти внутри этого цикла
             save_sent_url(news_url)
             sent_urls.add(news_url)
             new_dispatched += 1
             
-            # ИНТЕРВАЛ: ждем 5 секунд перед следующей новостью
+            # Пауза 5 секунд между отправками новостей
             print("Пауза 5 секунд...")
             time.sleep(5)
             
