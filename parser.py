@@ -65,7 +65,6 @@ def parse_trashbox():
     soup = BeautifulSoup(response.text, 'html.parser')
     
     # Регулярное выражение для поиска ссылок вида /link/YYYY-MM-DD-...
-    # Это полностью решает проблему с разницей часовых поясов
     link_pattern = re.compile(r'/link/\d{4}-\d{2}-\d{2}')
     
     valid_links = []
@@ -79,12 +78,11 @@ def parse_trashbox():
             if full_url not in valid_links:
                 valid_links.append(full_url)
 
-    print(f"Всего тегов ла ссылки на странице: {all_links_count}")
+    print(f"Всего тегов ссылок на странице: {all_links_count}")
     print(f"Найдено подходящих новостных ссылок: {len(valid_links)}")
 
     if not valid_links:
         print("Список новостей пуст. Возможно, сайт изменил структуру или заблокировал запрос.")
-        # Выведем кусочек кода страницы в лог для диагностики
         print("Кусочек HTML для проверки:")
         print(response.text[:1000])
         return
@@ -109,14 +107,45 @@ def parse_trashbox():
             title_tag = news_soup.find('h1')
             title = title_tag.get_text(strip=True) if title_tag else "Без названия"
             
-            content_div = news_soup.find('div', id='topic_content')
+            # Ищем текстовый блок в разных возможных контейнерах верстки Trashbox
+            content_div = (
+                news_soup.find('div', id='topic_content') or 
+                news_soup.find('div', class_='topic_content') or
+                news_soup.find('div', class_='content_text') or
+                news_soup.find('article')
+            )
             
             if content_div:
-                for s in content_div(['script', 'style']):
+                # Очищаем от мусора, скриптов, рекламы и фреймов
+                for s in content_div(['script', 'style', 'iframe', 'ins']):
                     s.decompose()
-                html_body = str(content_div)
+                
+                # Формируем красивое HTML тело письма
+                html_body = f"""
+                <html>
+                <head>
+                    <style>
+                        body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; }}
+                        img {{ max-width: 100%; height: auto; display: block; margin: 10px 0; }}
+                        a {{ color: #0066cc; text-decoration: none; }}
+                        .source-link {{ margin-top: 20px; padding-top: 10px; border-top: 1px solid #eee; font-size: 0.9em; }}
+                    </style>
+                </head>
+                <body>
+                    <div class="content-wrapper">
+                        {str(content_div)}
+                        <div class="source-link">
+                            <p><a href="{news_url}" target="_blank">Читать оригинал на Trashbox.ru</a></p>
+                        </div>
+                    </div>
+                </body>
+                </html>
+                """
             else:
-                html_body = "Не удалось извлечь содержимое новости."
+                # Попытка вытащить мета-описание, если верстка совсем не подошла
+                meta_desc = news_soup.find('meta', {'name': 'description'})
+                desc = meta_desc['content'] if meta_desc else "Не удалось извлечь содержимое новости."
+                html_body = f"<html><body><p>{desc}</p><br><a href='{news_url}'>Перейти к новости на сайте</a></body></html>"
 
             send_email(title, html_body)
             save_sent_url(news_url)
