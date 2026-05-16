@@ -17,14 +17,17 @@ SMTP_PORT = 587
 DB_FILE = "sent_urls.txt"
 
 def load_sent_urls():
+    """Загружает список уже отправленных URL из файла."""
     if os.path.exists(DB_FILE):
         with open(DB_FILE, "r", encoding="utf-8") as f:
+            # Очищаем от пробелов и пустых строк
             return set(line.strip() for line in f if line.strip())
     return set()
 
 def save_sent_url(url):
+    """Добавляет новый URL в файл базы данных."""
     with open(DB_FILE, "a", encoding="utf-8") as f:
-        f.write(url + "\n")
+        f.write(url.strip() + "\n")
 
 def send_email(subject, html_content):
     msg = MIMEMultipart()
@@ -49,7 +52,6 @@ def parse_trashbox():
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-        'Accept-Language': 'ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3'
     }
     
     print("Запрашиваем главную страницу новостей...")
@@ -63,25 +65,25 @@ def parse_trashbox():
     soup = BeautifulSoup(response.text, 'html.parser')
     link_pattern = re.compile(r'/link/\d{4}-\d{2}-\d{2}')
     
+    # 1. Загружаем базу данных
+    sent_urls = load_sent_urls()
+    
+    # 2. Собираем только уникальные и новые ссылки
     valid_links = []
     for a in soup.find_all('a', href=True):
-        href = a['href']
+        href = a['href'].strip()
         if link_pattern.search(href):
             full_url = href if href.startswith('http') else "https://trashbox.ru" + href
-            if full_url not in valid_links:
+            # Проверка на дубликаты внутри одного запуска и по базе данных
+            if full_url not in valid_links and full_url not in sent_urls:
                 valid_links.append(full_url)
 
-    print(f"Найдено подходящих новостных ссылок: {len(valid_links)}")
+    print(f"Найдено новых новостей для отправки: {len(valid_links)}")
 
-    sent_urls = load_sent_urls()
     new_dispatched = 0
-    
+    # Идем от старых к новым
     for news_url in reversed(valid_links):
-        if news_url in sent_urls:
-            continue
-
         print(f"Парсим новую статью: {news_url}")
-        new_dispatched += 1
         
         try:
             news_res = requests.get(news_url, headers=headers, timeout=15)
@@ -99,12 +101,12 @@ def parse_trashbox():
             )
             
             if content_div:
-                # УДАЛЕНИЕ КОММЕНТАРИЕВ И МУСОРА
-                # Удаляем блоки комментариев и форму ответа (стандартные ID Trashbox)
-                for trash in content_div.find_all(['div', 'section'], id=re.compile(r'comments|comm_cont|reply_form')):
+                # Чистим комментарии и мусор
+                for trash in content_div.find_all(['div', 'section', 'form'], 
+                                                 id=re.compile(r'comments|comm_cont|reply_form'),
+                                                 class_=re.compile(r'comments|comm_cont')):
                     trash.decompose()
                 
-                # Дополнительная чистка от скриптов, рекламы и стилей
                 for s in content_div(['script', 'style', 'iframe', 'ins', 'form']):
                     s.decompose()
                 
@@ -112,35 +114,31 @@ def parse_trashbox():
                 <html>
                 <head>
                     <style>
-                        body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; }}
+                        body {{ font-family: sans-serif; line-height: 1.6; color: #333; }}
                         img {{ max-width: 100%; height: auto; display: block; margin: 10px 0; }}
-                        a {{ color: #0066cc; text-decoration: none; }}
-                        .source-link {{ margin-top: 20px; padding-top: 10px; border-top: 1px solid #eee; font-size: 0.9em; }}
+                        .source-link {{ margin-top: 20px; border-top: 1px solid #eee; padding-top: 10px; }}
                     </style>
                 </head>
                 <body>
-                    <div class="content-wrapper">
-                        {str(content_div)}
-                        <div class="source-link">
-                            <p><a href="{news_url}" target="_blank">Читать оригинал на Trashbox.ru</a></p>
-                        </div>
+                    {str(content_div)}
+                    <div class="source-link">
+                        <p><a href="{news_url}">Читать оригинал на Trashbox.ru</a></p>
                     </div>
                 </body>
                 </html>
                 """
             else:
-                meta_desc = news_soup.find('meta', {'name': 'description'})
-                desc = meta_desc['content'] if meta_desc else "Не удалось извлечь содержимое."
-                html_body = f"<html><body><p>{desc}</p><br><a href='{news_url}'>Читать на сайте</a></body></html>"
+                html_body = f"Контент не найден. <a href='{news_url}'>Читать на сайте</a>"
 
             send_email(title, html_body)
             save_sent_url(news_url)
+            new_dispatched += 1
             
         except Exception as e:
             print(f"Ошибка при обработке {news_url}: {e}")
 
     if new_dispatched == 0:
-        print("Все новости уже были отправлены ранее.")
+        print("Новых новостей не обнаружено.")
 
 if __name__ == "__main__":
     parse_trashbox()
