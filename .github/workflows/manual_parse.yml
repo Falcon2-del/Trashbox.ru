@@ -2,6 +2,8 @@ name: Manual Trashbox Parser
 
 on:
   workflow_dispatch:
+  repository_dispatch:
+    types: [run_parser]
 
 jobs:
   build:
