@@ -1,11 +1,14 @@
 name: Manual Trashbox Parser
 
 on:
-  workflow_dispatch: # Позволяет запускать вручную
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    # Даем экшену права на запись в репозиторий для сохранения истории отправки
+    permissions:
+      contents: write
 
     steps:
     - name: Checkout code
@@ -26,3 +29,16 @@ jobs:
         EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
         EMAIL_RECEIVER: ${{ secrets.EMAIL_RECEIVER }}
       run: python parser.py
+
+    - name: Commit and push changes
+      run: |
+        git config --local user.email "github-actions[bot]@users.noreply.github.com"
+        git config --local user.name "github-actions[bot]"
+        # Проверяем, изменился ли файл sent_urls.txt
+        if [ -f sent_urls.txt ] && git status --porcelain | grep -q sent_urls.txt; then
+          git add sent_urls.txt
+          git commit -m "Update sent URLs database [skip ci]"
+          git push
+        else
+          echo "Нет новых данных для сохранения."
+        fi
