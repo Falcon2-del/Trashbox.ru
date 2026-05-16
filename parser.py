@@ -46,7 +46,6 @@ def send_email(subject, html_content):
 
 def parse_trashbox():
     url = "https://trashbox.ru/news"
-    # Расширенный User-Agent, чтобы сайт не блокировал GitHub хостинг
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
@@ -56,42 +55,27 @@ def parse_trashbox():
     print("Запрашиваем главную страницу новостей...")
     try:
         response = requests.get(url, headers=headers, timeout=15)
-        print(f"Статус ответа сайта: {response.status_code}")
         response.raise_for_status()
     except Exception as e:
-        print(f"Критическая ошибка загрузки сайта: {e}")
+        print(f"Ошибка загрузки: {e}")
         return
 
     soup = BeautifulSoup(response.text, 'html.parser')
-    
-    # Регулярное выражение для поиска ссылок вида /link/YYYY-MM-DD-...
     link_pattern = re.compile(r'/link/\d{4}-\d{2}-\d{2}')
     
     valid_links = []
-    all_links_count = 0
-    
     for a in soup.find_all('a', href=True):
-        all_links_count += 1
         href = a['href']
         if link_pattern.search(href):
             full_url = href if href.startswith('http') else "https://trashbox.ru" + href
             if full_url not in valid_links:
                 valid_links.append(full_url)
 
-    print(f"Всего тегов ссылок на странице: {all_links_count}")
     print(f"Найдено подходящих новостных ссылок: {len(valid_links)}")
 
-    if not valid_links:
-        print("Список новостей пуст. Возможно, сайт изменил структуру или заблокировал запрос.")
-        print("Кусочек HTML для проверки:")
-        print(response.text[:1000])
-        return
-
     sent_urls = load_sent_urls()
-    print(f"Уже было отправлено ранее: {len(sent_urls)} новостей.")
-    
     new_dispatched = 0
-    # Идем снизу вверх (от старых к самым свежим)
+    
     for news_url in reversed(valid_links):
         if news_url in sent_urls:
             continue
@@ -107,7 +91,6 @@ def parse_trashbox():
             title_tag = news_soup.find('h1')
             title = title_tag.get_text(strip=True) if title_tag else "Без названия"
             
-            # Ищем текстовый блок в разных возможных контейнерах верстки Trashbox
             content_div = (
                 news_soup.find('div', id='topic_content') or 
                 news_soup.find('div', class_='topic_content') or
@@ -116,11 +99,15 @@ def parse_trashbox():
             )
             
             if content_div:
-                # Очищаем от мусора, скриптов, рекламы и фреймов
-                for s in content_div(['script', 'style', 'iframe', 'ins']):
+                # УДАЛЕНИЕ КОММЕНТАРИЕВ И МУСОРА
+                # Удаляем блоки комментариев и форму ответа (стандартные ID Trashbox)
+                for trash in content_div.find_all(['div', 'section'], id=re.compile(r'comments|comm_cont|reply_form')):
+                    trash.decompose()
+                
+                # Дополнительная чистка от скриптов, рекламы и стилей
+                for s in content_div(['script', 'style', 'iframe', 'ins', 'form']):
                     s.decompose()
                 
-                # Формируем красивое HTML тело письма
                 html_body = f"""
                 <html>
                 <head>
@@ -142,19 +129,18 @@ def parse_trashbox():
                 </html>
                 """
             else:
-                # Попытка вытащить мета-описание, если верстка совсем не подошла
                 meta_desc = news_soup.find('meta', {'name': 'description'})
-                desc = meta_desc['content'] if meta_desc else "Не удалось извлечь содержимое новости."
-                html_body = f"<html><body><p>{desc}</p><br><a href='{news_url}'>Перейти к новости на сайте</a></body></html>"
+                desc = meta_desc['content'] if meta_desc else "Не удалось извлечь содержимое."
+                html_body = f"<html><body><p>{desc}</p><br><a href='{news_url}'>Читать на сайте</a></body></html>"
 
             send_email(title, html_body)
             save_sent_url(news_url)
             
         except Exception as e:
-            print(f"Ошибка при обработке новости {news_url}: {e}")
+            print(f"Ошибка при обработке {news_url}: {e}")
 
     if new_dispatched == 0:
-        print("Все найденные новости уже отправлялись ранее.")
+        print("Все новости уже были отправлены ранее.")
 
 if __name__ == "__main__":
     parse_trashbox()
