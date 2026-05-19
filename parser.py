@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 import smtplib
 import time
 import re
+import subprocess
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
@@ -17,16 +18,32 @@ SMTP_PORT = 587
 DB_FILE = "sent_urls.txt"
 
 def load_sent_urls():
+    # Перед чтением подтягиваем свежие данные из репозитория, на случай если параллельно идет отправка
+    try:
+        subprocess.run(["git", "pull"], check=False)
+    except Exception:
+        pass
+        
     if os.path.exists(DB_FILE):
         with open(DB_FILE, "r", encoding="utf-8") as f:
-            # Нормализуем старые ссылки: убираем пробелы, слеши в конце и приводим к нижнему регистру
             return set(line.strip().rstrip('/').lower() for line in f if line.strip())
     return set()
 
 def save_sent_url(url):
     with open(DB_FILE, "a", encoding="utf-8") as f:
-        # Сохраняем в едином формате — без слеша и в нижнем регистре
         f.write(url.strip().rstrip('/').lower() + "\n")
+    
+    # КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ ДЛЯ CRON-JOB: сохраняем в гит сразу после отправки поста
+    try:
+        subprocess.run(["git", "config", "--local", "user.email", "github-actions[bot]@users.noreply.github.com"], check=False)
+        subprocess.run(["git", "config", "--local", "user.name", "github-actions[bot]"], check=False)
+        subprocess.run(["git", "add", DB_FILE], check=False)
+        res = subprocess.run(["git", "diff", "--cached", "--quiet"], check=False)
+        if res.returncode != 0:
+            subprocess.run(["git", "commit", "-m", "Update database [skip ci]"], check=False)
+            subprocess.run(["git", "push"], check=False)
+    except Exception as e:
+        print(f"Ошибка сохранения в Git: {e}")
 
 def send_email(subject, html_content):
     clean_subject = " ".join(subject.split())
@@ -68,14 +85,12 @@ def parse_trashbox():
 
     # Собираем ссылки
     for a in soup.find_all('a', href=True):
-        href = a['href'].strip().split('?')[0].rstrip('/') # Чистим мусор и слеши
+        href = a['href'].strip().split('?')[0].rstrip('/')
         
         if link_pattern.search(href):
-            # КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: сначала делаем ссылку абсолютной и приводим к регистру
             full_url = href if href.startswith('http') else "https://trashbox.ru" + href
-            full_url = full_url.lower() # На случай разного регистра в ссылках
+            full_url = full_url.lower()
             
-            # Теперь проверка на дубликаты работает со 100% точностью
             if full_url not in sent_urls and full_url not in found_links:
                 found_links.append(full_url)
 
@@ -83,7 +98,8 @@ def parse_trashbox():
 
     new_dispatched = 0
     for news_url in reversed(found_links):
-        # Двойная защита перед обработкой
+        # Перепроверяем по свежей актуальной базе перед каждым постом
+        sent_urls = load_sent_urls()
         if news_url in sent_urls:
             continue
 
@@ -112,6 +128,14 @@ def parse_trashbox():
                 
                 for s in content_div(['script', 'style', 'iframe', 'ins', 'form']):
                     s.decompose()
+
+                # КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ ДЛЯ КАРТИНОК И АВАТАРОК
+                for img in content_div.find_all('img', src=True):
+                    src = img['src'].strip()
+                    if src.startswith('/') and not src.startswith('//'):
+                        img['src'] = "https://trashbox.ru" + src
+                    elif src.startswith('//'):
+                        img['src'] = "https:" + src
                 
                 html_body = f"""
                 <html>
@@ -127,12 +151,10 @@ def parse_trashbox():
 
             send_email(title, html_body)
             
-            # Сохраняем и сразу заносим в кэш памяти внутри этого цикла
+            # Сохраняем в файл и отправляем коммит немедленно
             save_sent_url(news_url)
-            sent_urls.add(news_url)
             new_dispatched += 1
             
-            # Пауза 5 секунд между отправками новостей
             print("Пауза 5 секунд...")
             time.sleep(5)
             
