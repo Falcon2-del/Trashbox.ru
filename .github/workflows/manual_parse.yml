@@ -30,16 +30,3 @@ jobs:
         EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
         EMAIL_RECEIVER: ${{ secrets.EMAIL_RECEIVER }}
       run: python parser.py
-
-    - name: Commit and push changes
-      run: |
-        git config --local user.email "github-actions[bot]@users.noreply.github.com"
-        git config --local user.name "github-actions[bot]"
-        touch sent_urls.txt
-        git add sent_urls.txt
-        if ! git diff --cached --quiet; then
-          git commit -m "Update sent URLs database [skip ci]"
-          git push
-        else
-          echo "Нет новых данных для сохранения."
-        fi
