@@ -50,7 +50,7 @@ def send_email(subject, html_content):
     msg = MIMEMultipart()
     msg['From'] = EMAIL_SENDER
     msg['To'] = EMAIL_RECEIVER
-    msg['Subject'] = f"Trashbox.ru: {clean_subject}"
+    msg['Subject'] = f"Trashbox.ru"
     msg.attach(MIMEText(html_content, 'html'))
     
     try:
