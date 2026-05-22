@@ -17,12 +17,13 @@ SMTP_PORT = 587
 
 DB_FILE = "sent_urls.txt"
 
-def load_sent_urls():
-    # Перед чтением подтягиваем свежие данные из репозитория, на случай если параллельно идет отправка
-    try:
-        subprocess.run(["git", "pull"], check=False)
-    except Exception:
-        pass
+def load_sent_urls(force_pull=False):
+    # Делаем git pull только при самом первом старте скрипта, в цикле дергать его нельзя
+    if force_pull:
+        try:
+            subprocess.run(["git", "pull"], check=False)
+        except Exception:
+            pass
         
     if os.path.exists(DB_FILE):
         with open(DB_FILE, "r", encoding="utf-8") as f:
@@ -33,7 +34,7 @@ def save_sent_url(url):
     with open(DB_FILE, "a", encoding="utf-8") as f:
         f.write(url.strip().rstrip('/').lower() + "\n")
     
-    # КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ ДЛЯ CRON-JOB: сохраняем в гит сразу после отправки поста
+    # Моментальный пуш в гит защищает от повторных параллельных запусков cron-job
     try:
         subprocess.run(["git", "config", "--local", "user.email", "github-actions[bot]@users.noreply.github.com"], check=False)
         subprocess.run(["git", "config", "--local", "user.name", "github-actions[bot]"], check=False)
@@ -50,7 +51,7 @@ def send_email(subject, html_content):
     msg = MIMEMultipart()
     msg['From'] = EMAIL_SENDER
     msg['To'] = EMAIL_RECEIVER
-    msg['Subject'] = f"Trashbox.ru"
+    msg['Subject'] = f"Trashbox.ru: {clean_subject}"  # Исправлено: тема теперь уникальна
     msg.attach(MIMEText(html_content, 'html'))
     
     try:
@@ -80,7 +81,8 @@ def parse_trashbox():
     soup = BeautifulSoup(response.text, 'html.parser')
     link_pattern = re.compile(r'/link/\d{4}-\d{2}-\d{2}')
     
-    sent_urls = load_sent_urls()
+    # Загружаем базу с выполнением git pull (первый раз)
+    sent_urls = load_sent_urls(force_pull=True)
     found_links = []
 
     # Собираем ссылки
@@ -98,8 +100,8 @@ def parse_trashbox():
 
     new_dispatched = 0
     for news_url in reversed(found_links):
-        # Перепроверяем по свежей актуальной базе перед каждым постом
-        sent_urls = load_sent_urls()
+        # Локальная перепроверка перед каждым постом БЕЗ git pull, чтобы не перезаписать файл локально
+        sent_urls = load_sent_urls(force_pull=False)
         if news_url in sent_urls:
             continue
 
@@ -129,7 +131,7 @@ def parse_trashbox():
                 for s in content_div(['script', 'style', 'iframe', 'ins', 'form']):
                     s.decompose()
 
-                # КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ ДЛЯ КАРТИНОК И АВАТАРОК
+                # Корректные абсолютные пути для аватарок и картинок
                 for img in content_div.find_all('img', src=True):
                     src = img['src'].strip()
                     if src.startswith('/') and not src.startswith('//'):
@@ -147,11 +149,11 @@ def parse_trashbox():
                 </html>
                 """
             else:
-                html_body = f"Контент не найден. <a href='{news_url}'>Перейти на сайт</a>"
+                html_body = f"Contент не найден. <a href='{news_url}'>Перейти на сайт</a>"
 
             send_email(title, html_body)
             
-            # Сохраняем в файл и отправляем коммит немедленно
+            # Добавляем в базу и сразу пушим коммит в гит
             save_sent_url(news_url)
             new_dispatched += 1
             
