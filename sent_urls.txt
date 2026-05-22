@@ -134,3 +134,4 @@ https://trashbox.ru/link/2026-05-22-xiaomi-predstavila-clip-on-earbuds
 https://trashbox.ru/link/2026-05-05-otkrytaya-beta-unity-ai||unity запустила открытую бету unity ai: можно создавать игры по текстовым командам
 https://trashbox.ru/link/2026-05-22-llm-patchi-zvuka-linux#comments||подсистема звука в linux 7.1 получает множество патчей созданных llm
 https://trashbox.ru/link/2026-05-22-anker-umnye-ustrojstva#comments||anker представила новое поколение умных устройств: от наушников до систем безопасности
+https://trashbox.ru/link/2026-05-22-predstavlen-realme-16t#comments||представлен realme 16t с большим экраном 144 гц и автономностью до 3 дней
