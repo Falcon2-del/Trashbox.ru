@@ -17,22 +17,42 @@ SMTP_PORT = 587
 
 DB_FILE = "sent_urls.txt"
 
-def load_sent_urls(force_pull=False):
-    # Делаем git pull только при самом первом старте скрипта, в цикле дергать его нельзя
+def load_sent_data(force_pull=False):
+    # Делаем git pull только при самом первом старте скрипта
     if force_pull:
         try:
             subprocess.run(["git", "pull"], check=False)
         except Exception:
             pass
         
+    sent_urls = set()
+    sent_titles = set()
+    
     if os.path.exists(DB_FILE):
         with open(DB_FILE, "r", encoding="utf-8") as f:
-            return set(line.strip().rstrip('/').lower() for line in f if line.strip())
-    return set()
+            for line in f:
+                line_str = line.strip()
+                if not line_str:
+                    continue
+                # Поддерживаем и старый формат (только URL), и новый (URL||заголовок)
+                if "||" in line_str:
+                    parts = line_str.split("||", 1)
+                    url_part = parts[0].strip().rstrip('/').lower()
+                    title_part = parts[1].strip().lower()
+                    sent_urls.add(url_part)
+                    sent_titles.add(title_part)
+                else:
+                    sent_urls.add(line_str.rstrip('/').lower())
+                    
+    return sent_urls, sent_titles
 
-def save_sent_url(url):
+def save_sent_data(url, title):
+    # Нормализуем строку перед записью
+    clean_url = url.strip().rstrip('/').lower()
+    clean_title = " ".join(title.split()).strip().lower()
+    
     with open(DB_FILE, "a", encoding="utf-8") as f:
-        f.write(url.strip().rstrip('/').lower() + "\n")
+        f.write(f"{clean_url}||{clean_title}\n")
     
     # Моментальный пуш в гит защищает от повторных параллельных запусков cron-job
     try:
@@ -51,7 +71,7 @@ def send_email(subject, html_content):
     msg = MIMEMultipart()
     msg['From'] = EMAIL_SENDER
     msg['To'] = EMAIL_RECEIVER
-    msg['Subject'] = f"Trashbox.ru: {clean_subject}"  # Исправлено: тема теперь уникальна
+    msg['Subject'] = f"Trashbox.ru: {clean_subject}"  # Исправлено: заголовок подставляется корректно
     msg.attach(MIMEText(html_content, 'html'))
     
     try:
@@ -82,7 +102,7 @@ def parse_trashbox():
     link_pattern = re.compile(r'/link/\d{4}-\d{2}-\d{2}')
     
     # Загружаем базу с выполнением git pull (первый раз)
-    sent_urls = load_sent_urls(force_pull=True)
+    sent_urls, sent_titles = load_sent_data(force_pull=True)
     found_links = []
 
     # Собираем ссылки
@@ -100,8 +120,8 @@ def parse_trashbox():
 
     new_dispatched = 0
     for news_url in reversed(found_links):
-        # Локальная перепроверка перед каждым постом БЕЗ git pull, чтобы не перезаписать файл локально
-        sent_urls = load_sent_urls(force_pull=False)
+        # Локальная перепроверка URL перед каждым постом БЕЗ git pull
+        sent_urls, sent_titles = load_sent_data(force_pull=False)
         if news_url in sent_urls:
             continue
 
@@ -115,6 +135,12 @@ def parse_trashbox():
             title_tag = news_soup.find('h1')
             title = title_tag.get_text(strip=True) if title_tag else "Без названия"
             
+            # ВТОРОЙ РУБЕЖ ЗАЩИТЫ: Проверка на 100% совпадение заголовка
+            clean_title_check = " ".join(title.split()).strip().lower()
+            if clean_title_check in sent_titles:
+                print(f"Пропуск: статья с заголовком '{title}' уже была отправлена ранее.")
+                continue
+            
             content_div = (
                 news_soup.find('div', id='topic_content') or 
                 news_soup.find('div', class_='topic_content') or
@@ -127,6 +153,11 @@ def parse_trashbox():
                                                  id=re.compile(r'comments|comm_cont|reply_form|related|tags'),
                                                  class_=re.compile(r'comments|comm_cont|topic_tags')):
                     trash.decompose()
+                
+                # УДАЛЕНИЕ ИНФОРМАЦИИ ОБ АВТОРЕ И ДАТЕ
+                for author_info in content_div.find_all(['div', 'span', 'a'], 
+                                                       class_=re.compile(r'author|avatar|topic_author|user|meta|date', re.I)):
+                    author_info.decompose()
                 
                 for s in content_div(['script', 'style', 'iframe', 'ins', 'form']):
                     s.decompose()
@@ -149,12 +180,12 @@ def parse_trashbox():
                 </html>
                 """
             else:
-                html_body = f"Contент не найден. <a href='{news_url}'>Перейти на сайт</a>"
+                html_body = f"Контент не найден. <a href='{news_url}'>Перейти на сайт</a>"
 
             send_email(title, html_body)
             
-            # Добавляем в базу и сразу пушим коммит в гит
-            save_sent_url(news_url)
+            # Добавляем в базу (URL и заголовок) и сразу пушим коммит в гит
+            save_sent_data(news_url, title)
             new_dispatched += 1
             
             print("Пауза 5 секунд...")
