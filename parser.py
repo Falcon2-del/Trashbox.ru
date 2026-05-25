@@ -148,10 +148,10 @@ def parse_trashbox():
             )
             
             if content_div:
-                # Глубокая очистка контента от мусора
+                # Глубокая очистка контента от мусора (добавлена очистка лайков, дизлайков и рейтингов)
                 for trash in content_div.find_all(['div', 'section', 'form', 'script', 'style', 'iframe', 'ins'], 
-                                                 id=re.compile(r'comments|comm_cont|reply_form|related|tags'),
-                                                 class_=re.compile(r'comments|comm_cont|topic_tags')):
+                                                 id=re.compile(r'comments|comm_cont|reply_form|related|tags|vote|rating|like|dislike', re.I),
+                                                 class_=re.compile(r'comments|comm_cont|topic_tags|vote|rating|like|dislike', re.I)):
                     trash.decompose()
                 
                 # УДАЛЕНИЕ ИНФОРМАЦИИ ОБ АВТОРЕ И ДАТЕ
