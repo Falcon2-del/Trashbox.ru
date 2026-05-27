@@ -176,3 +176,4 @@ https://trashbox.ru/link/2026-05-27-data-vyhoda-hyperos-4#comments||компан
 https://trashbox.ru/link/2026-05-27-gigant-727#comments||представлен отечественный моноблок гигант-727
 https://trashbox.ru/link/2026-05-27-medicinskie-spravki-cherez-max#comments||медицинские справки начнут выдавать через российский мессенджер max
 https://trashbox.ru/link/2026-05-27-libre-office-dlya-veba-i-mobilnyh-ustrojstv#comments||разработчики libreoffice приняли решение о развитии мобильной и веб-версии пакета по
+https://trashbox.ru/link/2026-05-27-pavona-otkrytyj-nabor-risc-v-komponentov#comments||проект pavona создаёт открытый набор компонентов для risc-v чипов широкой специализации
