@@ -179,3 +179,4 @@ https://trashbox.ru/link/2026-05-27-libre-office-dlya-veba-i-mobilnyh-ustrojstv#
 https://trashbox.ru/link/2026-05-27-pavona-otkrytyj-nabor-risc-v-komponentov#comments||проект pavona создаёт открытый набор компонентов для risc-v чипов широкой специализации
 https://trashbox.ru/link/2026-05-28-huawei-watch-fit-5-mts#comments||huawei watch fit 5 pro получили экран на 3000 нит и экг
 https://trashbox.ru/link/2026-05-28-huawei-watch-fit-5-mts||мтс начала продажи huawei watch fit 5 и предзаказ pro-версии
+https://trashbox.ru/link/2026-05-28-mediatek-predstavila-dimensity-8550#comments||mediatek представила процессор dimensity 8550: получил поддержку gemini nano v3 и на этом всё
