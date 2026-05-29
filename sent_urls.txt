@@ -203,3 +203,4 @@ https://trashbox.ru/link/2026-05-29-processornyj-modul-e2c3-com#comments||раз
 https://trashbox.ru/link/2026-05-29-processornyj-modul-e2c3-com||российский процессорный модуль для роботов на базе «эльбрус-2с3» получил статус отечественного
 https://trashbox.ru/link/2026-05-29-mediatek-dimensity-7500#comments||mediatek представила процессор dimensity 7500 — конкурента snapdragon 7 от qualcomm
 https://trashbox.ru/link/2026-05-29-hongqi-guoya-predstavlen-v-rossii#comments||hongqi guoya официально представлен в россии — роскошный седан от 27,7 млн рублей
+https://trashbox.ru/link/2026-05-29-flathub-zapreschaet-ispolzovanie-llm#comments||flathub строго запрещает использование генеративного ии в опубликованных на платформе приложениях
