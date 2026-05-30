@@ -207,3 +207,4 @@ https://trashbox.ru/link/2026-05-29-flathub-zapreschaet-ispolzovanie-llm#comment
 https://trashbox.ru/link/2026-05-30-elektronnaya-kniga-zhalob#comments||на «госуслугах» появится электронная книга жалоб
 https://trashbox.ru/link/2026-05-30-hyperos-4#comments||названы устройства xiaomi, redmi и poco, которые смогут обновиться до hyperos 4
 https://trashbox.ru/link/2026-05-30-hyperos-3-1#comments||hyperos 3.1 получили уже 40 устройств: система доступна и для некоторых моделей в россии
+https://trashbox.ru/link/2026-05-30-ubuntu-stingray-snaphot#comments||canonical опубликовала первую сборку будущей ubuntu 26.10 «stonking stingray»
