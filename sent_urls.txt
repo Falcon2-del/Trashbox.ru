@@ -212,3 +212,4 @@ https://trashbox.ru/link/2026-05-31-chip-bystree-processorov#comments||учён�
 https://trashbox.ru/link/2026-05-31-acer-predstavila-na-computex-2026#comments||acer представила на computex 2026 умные очки и кольцо с ии
 https://trashbox.ru/link/2026-05-31-intel-thunderbolt-share#comments||intel представила thunderbolt share — протокол для обмена файлами между пк с windows
 https://trashbox.ru/link/2026-05-31-samsung-zhidkostnoe-ohlazhdenie#comments||в смартфонах samsung может появиться жидкостное охлаждение
+https://trashbox.ru/link/2026-05-31-armbian-26-5#comments||выпущена armbian 26.5.1 — новая версия linux-дистрибутива для одноплатных компьютеров
