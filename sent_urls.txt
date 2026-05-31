@@ -210,3 +210,4 @@ https://trashbox.ru/link/2026-05-30-hyperos-3-1#comments||hyperos 3.1 получ
 https://trashbox.ru/link/2026-05-30-ubuntu-stingray-snaphot#comments||canonical опубликовала первую сборку будущей ubuntu 26.10 «stonking stingray»
 https://trashbox.ru/link/2026-05-31-chip-bystree-processorov#comments||учёные создали устройство, обрабатывающее информацию в 1000 раз быстрее процессоров
 https://trashbox.ru/link/2026-05-31-acer-predstavila-na-computex-2026#comments||acer представила на computex 2026 умные очки и кольцо с ии
+https://trashbox.ru/link/2026-05-31-intel-thunderbolt-share#comments||intel представила thunderbolt share — протокол для обмена файлами между пк с windows
