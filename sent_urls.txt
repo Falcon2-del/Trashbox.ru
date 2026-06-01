@@ -216,3 +216,4 @@ https://trashbox.ru/link/2026-05-31-armbian-26-5#comments||выпущена armb
 https://trashbox.ru/link/2026-05-31-universalnyj-qr-kod#comments||осенью в россии появится универсальный qr-код для покупателей: в чём его преимущество
 https://trashbox.ru/link/2026-06-01-nvidia-rtx-spark#comments||nvidia анонсировала rtx spark — процессор уровня суперкомпьютеров для обычного пк с windows
 https://trashbox.ru/link/2026-06-01-windows-11-problemy-poiska#comments||поиск в windows 11 научился искать файлы по двум символам и подстроке
+https://trashbox.ru/link/2026-06-01-nvidia-dgx-station-for-windows#comments||представлен nvidia dgx station for windows — самый мощный в мире настольный суперкомпьютер
