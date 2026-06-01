@@ -214,3 +214,4 @@ https://trashbox.ru/link/2026-05-31-intel-thunderbolt-share#comments||intel пр
 https://trashbox.ru/link/2026-05-31-samsung-zhidkostnoe-ohlazhdenie#comments||в смартфонах samsung может появиться жидкостное охлаждение
 https://trashbox.ru/link/2026-05-31-armbian-26-5#comments||выпущена armbian 26.5.1 — новая версия linux-дистрибутива для одноплатных компьютеров
 https://trashbox.ru/link/2026-05-31-universalnyj-qr-kod#comments||осенью в россии появится универсальный qr-код для покупателей: в чём его преимущество
+https://trashbox.ru/link/2026-06-01-nvidia-rtx-spark#comments||nvidia анонсировала rtx spark — процессор уровня суперкомпьютеров для обычного пк с windows
