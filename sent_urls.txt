@@ -249,3 +249,4 @@ https://trashbox.ru/link/2026-06-02-gigabyte-noutbuki-aorus-gimate#comments||gig
 https://trashbox.ru/link/2026-06-02-xiaomi-dobavlyaet-podderzhku-airdrop-v-hyperos#comments||xiaomi добавляет поддержку airdrop в hyperos — первым получит xiaomi 17t pro
 https://trashbox.ru/link/2026-06-03-codex-plaginy-annotacii#comments||в codex от openai появились плагины, аннотации и функция для создания сайтов и приложений
 https://trashbox.ru/link/2026-06-03-dreame-letnie-skidki#comments||dreame объявила о летних скидках на флагманские роботы-пылесосы
+https://trashbox.ru/link/2026-06-03-gpu-nvidia-v-kachestve-swap#comments||vram видеокарт nvidia превратили в swap для linux — без отдельного kernel module и с поддержкой geforce
