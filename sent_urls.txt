@@ -252,3 +252,4 @@ https://trashbox.ru/link/2026-06-03-dreame-letnie-skidki#comments||dreame объ
 https://trashbox.ru/link/2026-06-03-gpu-nvidia-v-kachestve-swap#comments||vram видеокарт nvidia превратили в swap для linux — без отдельного kernel module и с поддержкой geforce
 https://trashbox.ru/link/2026-06-03-microsoft-mai#comments||microsoft представила семь новых ии-моделей mai и механизм дообучения frontier tuning
 https://trashbox.ru/link/2026-06-03-android-novye-funkcii#comments||создание образа, защита от поддельных звонков и другое: в android появились новые функции
+https://trashbox.ru/link/2026-06-03-windows-11-coreutils#comments||в windows 11 появился ии-терминал и инструмент coreutils для запуска утилит linux и macos без wsl
