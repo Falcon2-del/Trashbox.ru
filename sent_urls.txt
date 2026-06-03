@@ -262,3 +262,4 @@ https://trashbox.ru/link/2026-06-03-android-airdrop-cherez-quick-share#comments|
 https://trashbox.ru/link/2026-06-03-kamera-na-podvese-i-partnerstvo-s-arri-honor-raskryla-tehnicheskie-detali-i-srok#comments||камера на подвесе и партнерство с arri: honor раскрыла технические детали и сроки выхода robot phone
 https://trashbox.ru/link/2026-06-03-wildberries-messendzher#comments||wildberries создал свой мессенджер, но пока он окутан тайной
 https://trashbox.ru/link/2026-06-03-atari-anonsiruet-toy-story#comments||atari возвращает историю игрушек: анонс toy story: retro roundup! и toy story 3 complete edition
+https://trashbox.ru/link/2026-06-03-vim-classic-8.3-fork-no-llm#comments||редактор vim получил форк с подзаголовком classic: в нём только улучшения без ии-функций
