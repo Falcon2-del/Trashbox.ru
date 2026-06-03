@@ -251,3 +251,4 @@ https://trashbox.ru/link/2026-06-03-codex-plaginy-annotacii#comments||в codex �
 https://trashbox.ru/link/2026-06-03-dreame-letnie-skidki#comments||dreame объявила о летних скидках на флагманские роботы-пылесосы
 https://trashbox.ru/link/2026-06-03-gpu-nvidia-v-kachestve-swap#comments||vram видеокарт nvidia превратили в swap для linux — без отдельного kernel module и с поддержкой geforce
 https://trashbox.ru/link/2026-06-03-microsoft-mai#comments||microsoft представила семь новых ии-моделей mai и механизм дообучения frontier tuning
+https://trashbox.ru/link/2026-06-03-android-novye-funkcii#comments||создание образа, защита от поддельных звонков и другое: в android появились новые функции
