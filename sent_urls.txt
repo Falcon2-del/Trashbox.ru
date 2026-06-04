@@ -282,3 +282,4 @@ https://trashbox.ru/link/2026-06-04-v-warface-startoval-sezon-bagrovoe-solnce-s-
 https://trashbox.ru/link/2026-06-04-dreame-predstavila-aerogril-tasti-pt60#comments||dreame представила tasti pt60 — аэрогриль, который превращается в ланчбокс
 https://trashbox.ru/link/2026-06-04-qualcomm-lenovo-yoga-linux-podderzhka#comments||сотрудники qualcomm добавляют поддержку linux на lenovo yoga slim 7x gen11 c процессором snapdragon x2
 https://trashbox.ru/link/2026-06-04-cloudflare-internet-trafik-botov-oboshyol-lyudej#comments||cloudflare: интернет-трафик от ботов впервые обошёл реальных пользователей
+https://trashbox.ru/link/2026-06-04-amd-gaia-vybor-ustrojstva#comments||amd gaia 0.20 начал поддерживать несколько устройств для локального запуска ии-агентов
