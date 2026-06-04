@@ -280,3 +280,4 @@ https://trashbox.ru/link/2026-06-04-kalanshnikov-promyshlennye-roboty#comments||
 https://trashbox.ru/link/2026-06-04-intel-avx-apx-gcc#comments||новый патч intel для gcc позволит оптимизировать программы для разных поколений процессоров
 https://trashbox.ru/link/2026-06-04-v-warface-startoval-sezon-bagrovoe-solnce-s-novym-boevym-propuskom-i-pererabotko#comments||в warface стартовал сезон «багровое солнце» с новым боевым пропуском и переработкой меты
 https://trashbox.ru/link/2026-06-04-dreame-predstavila-aerogril-tasti-pt60#comments||dreame представила tasti pt60 — аэрогриль, который превращается в ланчбокс
+https://trashbox.ru/link/2026-06-04-qualcomm-lenovo-yoga-linux-podderzhka#comments||сотрудники qualcomm добавляют поддержку linux на lenovo yoga slim 7x gen11 c процессором snapdragon x2
