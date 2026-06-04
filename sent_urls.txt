@@ -278,3 +278,4 @@ https://trashbox.ru/link/2026-06-04-teamgroup-t-create-expert-p35sg#comments||п
 https://trashbox.ru/link/2026-06-04-google-pokupaet-ishodnyj-kod#comments||google тайно скупает исходный код приложений из google play для обучения ии
 https://trashbox.ru/link/2026-06-04-kalanshnikov-promyshlennye-roboty#comments||«калашников» запустил производство промышленных роботов
 https://trashbox.ru/link/2026-06-04-intel-avx-apx-gcc#comments||новый патч intel для gcc позволит оптимизировать программы для разных поколений процессоров
+https://trashbox.ru/link/2026-06-04-v-warface-startoval-sezon-bagrovoe-solnce-s-novym-boevym-propuskom-i-pererabotko#comments||в warface стартовал сезон «багровое солнце» с новым боевым пропуском и переработкой меты
