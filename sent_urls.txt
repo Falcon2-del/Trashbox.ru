@@ -284,3 +284,4 @@ https://trashbox.ru/link/2026-06-04-qualcomm-lenovo-yoga-linux-podderzhka#commen
 https://trashbox.ru/link/2026-06-04-cloudflare-internet-trafik-botov-oboshyol-lyudej#comments||cloudflare: интернет-трафик от ботов впервые обошёл реальных пользователей
 https://trashbox.ru/link/2026-06-04-amd-gaia-vybor-ustrojstva#comments||amd gaia 0.20 начал поддерживать несколько устройств для локального запуска ии-агентов
 https://trashbox.ru/link/2026-06-05-hisense-a10#comments||hisense анонсировала a10 — новый смартфон с технологией e-ink
+https://trashbox.ru/link/2026-06-05-huawei-nova-y74#comments||представлен huawei nova y74 — простой смартфон с «живучей» батареей
