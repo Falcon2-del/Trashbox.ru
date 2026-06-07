@@ -1,20 +1,24 @@
 import os
 import requests
 from bs4 import BeautifulSoup
+import smtplib
 import time
 import re
 import subprocess
-import datetime
-import random
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
-# Настройки Яндекс Диска
-YANDEX_TOKEN = os.environ.get("YANDEX_DISK_TOKEN")
-ROOT_FOLDER = "/Моя_Соцсеть"
-QUEUE_FOLDER = f"{ROOT_FOLDER}/Очередь/Trashbox"
+# Настройки из переменных окружения
+EMAIL_SENDER = os.environ.get('EMAIL_SENDER')
+EMAIL_PASSWORD = os.environ.get('EMAIL_PASSWORD')
+EMAIL_RECEIVER = os.environ.get('EMAIL_RECEIVER')
+SMTP_SERVER = "smtp.gmail.com"
+SMTP_PORT = 587
 
 DB_FILE = "sent_urls.txt"
 
 def load_sent_data(force_pull=False):
+    # Делаем git pull только при самом первом старте скрипта
     if force_pull:
         try:
             subprocess.run(["git", "pull"], check=False)
@@ -30,6 +34,7 @@ def load_sent_data(force_pull=False):
                 line_str = line.strip()
                 if not line_str:
                     continue
+                # Поддерживаем и старый формат (только URL), и новый (URL||заголовок)
                 if "||" in line_str:
                     parts = line_str.split("||", 1)
                     url_part = parts[0].strip().rstrip('/').lower()
@@ -37,105 +42,127 @@ def load_sent_data(force_pull=False):
                     sent_urls.add(url_part)
                     sent_titles.add(title_part)
                 else:
-                    url_part = line_str.rstrip('/').lower()
-                    sent_urls.add(url_part)
+                    sent_urls.add(line_str.rstrip('/').lower())
+                    
     return sent_urls, sent_titles
 
 def save_sent_data(url, title):
-    line_to_write = f"{url.strip()}||{title.strip()}\n"
+    # Нормализуем строку перед записью
+    clean_url = url.strip().rstrip('/').lower()
+    clean_title = " ".join(title.split()).strip().lower()
+    
     with open(DB_FILE, "a", encoding="utf-8") as f:
-        f.write(line_to_write)
+        f.write(f"{clean_url}||{clean_title}\n")
     
+    # Моментальный пуш в гит защищает от повторных параллельных запусков cron-job
     try:
-        subprocess.run(["git", "config", "--local", "user.email", "action@github.com"], check=False)
-        subprocess.run(["git", "config", "--local", "user.name", "GitHub Action"], check=False)
+        subprocess.run(["git", "config", "--local", "user.email", "github-actions[bot]@users.noreply.github.com"], check=False)
+        subprocess.run(["git", "config", "--local", "user.name", "github-actions[bot]"], check=False)
         subprocess.run(["git", "add", DB_FILE], check=False)
-        subprocess.run(["git", "commit", "-m", f"Add {title[:20]} to history"], check=False)
-        subprocess.run(["git", "push"], check=False)
-        print("База данных успешно синхронизирована с репозиторием Git.")
+        res = subprocess.run(["git", "diff", "--cached", "--quiet"], check=False)
+        if res.returncode != 0:
+            subprocess.run(["git", "commit", "-m", "Update database [skip ci]"], check=False)
+            subprocess.run(["git", "push"], check=False)
     except Exception as e:
-        print(f"Ошибка при сохранении базы данных в Git: {e}")
+        print(f"Ошибка сохранения в Git: {e}")
 
-def yandex_create_folder(path):
-    url = "https://cloud-api.yandex.net/v1/disk/resources"
-    headers = {"Authorization": f"OAuth {YANDEX_TOKEN}"}
-    params = {"path": path}
-    res = requests.get(url, headers=headers, params=params)
-    if res.status_code == 404:
-        requests.put(url, headers=headers, params=params)
-
-def yandex_upload_bytes(path, data):
-    url = "https://cloud-api.yandex.net/v1/disk/resources/upload"
-    headers = {"Authorization": f"OAuth {YANDEX_TOKEN}"}
-    params = {"path": path, "overwrite": "true"}
-    res = requests.get(url, headers=headers, params=params)
-    if res.status_code == 200:
-        upload_url = res.json().get("href")
-        requests.put(upload_url, data=data)
-
-def save_to_yandex_disk(title, html_body):
-    try:
-        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        microsec = datetime.datetime.now().microsecond
-        rand_id = random.randint(1000, 9999)
-        post_id = f"trashbox_{timestamp}_{microsec}_{rand_id}"
-        
-        post_queue_path = f"{QUEUE_FOLDER}/{post_id}"
-        
-        yandex_create_folder(ROOT_FOLDER)
-        yandex_create_folder(f"{ROOT_FOLDER}/Очередь")
-        yandex_create_folder(QUEUE_FOLDER)
-        yandex_create_folder(post_queue_path)
-        
-        unix_time = str(int(time.time()))
-        yandex_upload_bytes(f"{post_queue_path}/time.txt", unix_time.encode('utf-8'))
-        
-        yandex_upload_bytes(f"{post_queue_path}/content.html", html_body.encode('utf-8'))
-        print(f"  [Яндекс.Диск OK] Новость {title} сохранена.")
-        return True
-    except Exception as e:
-        print(f"Ошибка сохранения новости на Яндекс Диск: {e}")
-        return False
-
-def get_latest_news():
-    sent_urls, sent_titles = load_sent_data(force_pull=True)
-    
-    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0 Safari/537.36'}
-    rss_url = "https://trashbox.ru/feed_rss/news/"
+def send_email(subject, html_content):
+    clean_subject = " ".join(subject.split())
+    msg = MIMEMultipart()
+    msg['From'] = EMAIL_SENDER
+    msg['To'] = EMAIL_RECEIVER
+    msg['Subject'] = f"Trashbox"  # Исправлено: заголовок подставляется корректно
+    msg.attach(MIMEText(html_content, 'html'))
     
     try:
-        res = requests.get(rss_url, headers=headers, timeout=20)
-        soup = BeautifulSoup(res.text, 'xml')
-        items = soup.find_all('item')
+        server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
+        server.starttls()
+        server.login(EMAIL_SENDER, EMAIL_PASSWORD)
+        server.send_message(msg)
+        server.quit()
+        print(f"Письмо отправлено: {clean_subject}")
     except Exception as e:
-        print(f"Ошибка при получении RSS: {e}")
+        print(f"Ошибка почты: {e}")
+
+def parse_trashbox():
+    url = "https://trashbox.ru/news"
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    }
+    
+    print("Проверка новостей...")
+    try:
+        response = requests.get(url, headers=headers, timeout=15)
+        response.raise_for_status()
+    except Exception as e:
+        print(f"Ошибка загрузки сайта: {e}")
         return
 
-    new_dispatched = 0
+    soup = BeautifulSoup(response.text, 'html.parser')
+    link_pattern = re.compile(r'/link/\d{4}-\d{2}-\d{2}')
+    
+    # Загружаем базу с выполнением git pull (первый раз)
+    sent_urls, sent_titles = load_sent_data(force_pull=True)
+    found_links = []
 
-    for item in reversed(items):
-        news_url = item.find('link').text.strip()
-        title = item.find('title').text.strip()
+    # Собираем ссылки
+    for a in soup.find_all('a', href=True):
+        href = a['href'].strip().split('?')[0].rstrip('/')
         
-        norm_url = news_url.rstrip('/').lower()
-        norm_title = title.lower()
-
-        if norm_url in sent_urls or norm_title in sent_titles:
-            continue
+        if link_pattern.search(href):
+            full_url = href if href.startswith('http') else "https://trashbox.ru" + href
+            full_url = full_url.lower()
             
-        print(f"\nНайдена новая новость: {title}")
-        print(f"Ссылка: {news_url}")
+            if full_url not in sent_urls and full_url not in found_links:
+                found_links.append(full_url)
+
+    print(f"К отправке: {len(found_links)} уникальных новостей.")
+
+    new_dispatched = 0
+    for news_url in reversed(found_links):
+        # Локальная перепроверка URL перед каждым постом БЕЗ git pull
+        sent_urls, sent_titles = load_sent_data(force_pull=False)
+        if news_url in sent_urls:
+            continue
+
+        print(f"Обработка статьи: {news_url}")
         
         try:
-            page_res = requests.get(news_url, headers=headers, timeout=20)
-            page_soup = BeautifulSoup(page_res.text, 'html.parser')
+            news_res = requests.get(news_url, headers=headers, timeout=15)
+            news_res.raise_for_status()
+            news_soup = BeautifulSoup(news_res.text, 'html.parser')
             
-            content_div = page_soup.find('div', id=re.compile(r'^item_content_'))
+            title_tag = news_soup.find('h1')
+            title = title_tag.get_text(strip=True) if title_tag else "Без названия"
+            
+            # ВТОРОЙ РУБЕЖ ЗАЩИТЫ: Проверка на 100% совпадение заголовка
+            clean_title_check = " ".join(title.split()).strip().lower()
+            if clean_title_check in sent_titles:
+                print(f"Пропуск: статья с заголовком '{title}' уже была отправлена ранее.")
+                continue
+            
+            content_div = (
+                news_soup.find('div', id='topic_content') or 
+                news_soup.find('div', class_='topic_content') or
+                news_soup.find('article')
+            )
             
             if content_div:
-                for s in content_div.find_all(['script', 'style', 'ins', 'iframe']):
+                # Глубокая очистка контента от мусора (добавлена очистка лайков, дизлайков и рейтингов)
+                for trash in content_div.find_all(['div', 'section', 'form', 'script', 'style', 'iframe', 'ins'], 
+                                                 id=re.compile(r'comments|comm_cont|reply_form|related|tags|vote|rating|like|dislike', re.I),
+                                                 class_=re.compile(r'comments|comm_cont|topic_tags|vote|rating|like|dislike', re.I)):
+                    trash.decompose()
+                
+                # УДАЛЕНИЕ ИНФОРМАЦИИ ОБ АВТОРЕ И ДАТЕ
+                for author_info in content_div.find_all(['div', 'span', 'a'], 
+                                                       class_=re.compile(r'author|avatar|topic_author|user|meta|date', re.I)):
+                    author_info.decompose()
+                
+                for s in content_div(['script', 'style', 'iframe', 'ins', 'form']):
                     s.decompose()
 
+                # Корректные абсолютные пути для аватарок и картинок
                 for img in content_div.find_all('img', src=True):
                     src = img['src'].strip()
                     if src.startswith('/') and not src.startswith('//'):
@@ -145,8 +172,7 @@ def get_latest_news():
                 
                 html_body = f"""
                 <html>
-                <body style="font-family: sans-serif; line-height: 1.6; color: #333; padding:10px;">
-                    <h2>{title}</h2>
+                <body style="font-family: sans-serif; line-height: 1.6; color: #333;">
                     {str(content_div)}
                     <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
                     <p><a href="{news_url}">Читать оригинал на Trashbox.ru</a></p>
@@ -154,14 +180,16 @@ def get_latest_news():
                 </html>
                 """
             else:
-                html_body = f"<html><body><h2>{title}</h2>Контент не найден. <a href='{news_url}'>Перейти на сайт</a></body></html>"
+                html_body = f"Контент не найден. <a href='{news_url}'>Перейти на сайт</a>"
 
-            if save_to_yandex_disk(title, html_body):
-                save_sent_data(news_url, title)
-                new_dispatched += 1
-                
-                print("Пауза 5 секунд...")
-                time.sleep(5)
+            send_email(title, html_body)
+            
+            # Добавляем в базу (URL и заголовок) и сразу пушим коммит в гит
+            save_sent_data(news_url, title)
+            new_dispatched += 1
+            
+            print("Пауза 5 секунд...")
+            time.sleep(5)
             
         except Exception as e:
             print(f"Ошибка при обработке {news_url}: {e}")
@@ -170,7 +198,4 @@ def get_latest_news():
         print("Новых новостей нет.")
 
 if __name__ == "__main__":
-    if not YANDEX_TOKEN:
-        print("Ошибка: Переменная YANDEX_DISK_TOKEN не задана")
-    else:
-        get_latest_news()
+    parse_trashbox()
