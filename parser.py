@@ -8,7 +8,7 @@ import datetime
 import random
 
 # Настройки Яндекс Диска
-YANDEX_TOKEN = os.environ.get('YANDEX_DISK_TOKEN')
+YANDEX_TOKEN = os.environ.get("YANDEX_DISK_TOKEN")
 ROOT_FOLDER = "/Моя_Соцсеть"
 QUEUE_FOLDER = f"{ROOT_FOLDER}/Очередь/Trashbox"
 
