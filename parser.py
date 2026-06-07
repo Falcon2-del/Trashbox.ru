@@ -25,7 +25,7 @@ def load_sent_data(force_pull=False):
     sent_titles = set()
     
     if os.path.exists(DB_FILE):
-        with open(DB_FILE, \"r\", encoding=\"utf-8\") as f:
+        with open(DB_FILE, "r", encoding="utf-8") as f:
             for line in f:
                 line_str = line.strip()
                 if not line_str:
