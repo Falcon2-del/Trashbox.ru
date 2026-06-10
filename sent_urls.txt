@@ -329,3 +329,4 @@ https://trashbox.ru/link/2026-06-09-windows-10-obnovlenie#comments||для windo
 https://trashbox.ru/link/2026-06-09-anthropic-predstavila-claude-fable-5-mythos-5#comments||anthropic представила общедоступную ии-модель claude fable 5 и сильно ограниченную claude mythos 5
 https://trashbox.ru/link/2026-06-10-huawei-nova-15-max-vyshel-v-rossii-batareya-8500-ma-ch-i-wi-fi-7-za-25-tysyach#comments||huawei nova 15 max вышел в россии: батарея 8500 ма·ч и wi-fi 7 за 25 тысяч
 https://trashbox.ru/link/2026-06-10-mts-golosovoy-pomoschnik-teper-obschaetsya-s-kurerami-za-abonenta#comments||мтс: голосовой помощник теперь общается с курьерами за абонента
+https://trashbox.ru/link/2026-06-10-gemini-3-5-live-translate#comments||уже в «google переводчике»: новая gemini 3.5 live translate переводит речь ещё до окончания реплики
