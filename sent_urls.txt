@@ -340,3 +340,4 @@ https://trashbox.ru/link/2026-06-10-pochta-rossii-operator#comments||у «поч
 https://trashbox.ru/link/2026-06-10-oneplus-turbo-6x#comments||представлены oneplus turbo 6x и 6x pro — смартфоны с ёмкими батареями и доступными ценами
 https://trashbox.ru/link/2026-06-10-kabel-dlya-arktiki#comments||в россии запустили производство волоконно-оптического подводного кабеля для арктики
 https://trashbox.ru/link/2026-06-10-llm-agenty-v-linux-firmware#comments||репозиторий с прошивками для linux вводит правила по использованию llm-агентов
+https://trashbox.ru/link/2026-06-10-alpine-linux-3.24-cosmic-ipv6#comments||минималистичный alpine linux 3.24 получил поддержку окружения cosmic и загрузки по ipv6
