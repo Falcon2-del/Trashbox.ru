@@ -342,3 +342,4 @@ https://trashbox.ru/link/2026-06-10-kabel-dlya-arktiki#comments||в россии
 https://trashbox.ru/link/2026-06-10-llm-agenty-v-linux-firmware#comments||репозиторий с прошивками для linux вводит правила по использованию llm-агентов
 https://trashbox.ru/link/2026-06-10-alpine-linux-3.24-cosmic-ipv6#comments||минималистичный alpine linux 3.24 получил поддержку окружения cosmic и загрузки по ipv6
 https://trashbox.ru/link/2026-06-10-windows-11-printery#comments||microsoft намерена отказаться от сторонних драйверов принтеров в windows 11
+https://trashbox.ru/link/2026-06-10-roblox-zarabotal#comments||roblox заработал в россии — екатерина мизулина
