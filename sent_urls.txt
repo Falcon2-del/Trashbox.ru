@@ -363,3 +363,4 @@ https://trashbox.ru/link/2026-06-11-amazfit-crace#comments||компания ama
 https://trashbox.ru/link/2026-06-11-novyj-rezhim-vosstanovleniya-v-ios-27#comments||новый режим восстановления в ios 27 позволит вернуть к жизни iphone и ipad без подключения к пк
 https://trashbox.ru/link/2026-06-11-yserver-dlya-x11-na-rust#comments||представлен yserver — новая реализация x11 на rust, созданная при участии claude
 https://trashbox.ru/link/2026-06-11-proton-experimental-iyun-terraria-path-of-exile#comments||proton experimental исправляет ошибки в path of exile, terraria и некоторых классических играх
+https://trashbox.ru/link/2026-06-11-coloros-ne-budet-kopirovat-liquid-glass#comments||разработчики coloros заверили, что оболочка не будет копировать дизайн liquid glass от apple
