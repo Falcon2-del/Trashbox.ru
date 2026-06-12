@@ -365,3 +365,4 @@ https://trashbox.ru/link/2026-06-11-yserver-dlya-x11-na-rust#comments||пред�
 https://trashbox.ru/link/2026-06-11-proton-experimental-iyun-terraria-path-of-exile#comments||proton experimental исправляет ошибки в path of exile, terraria и некоторых классических играх
 https://trashbox.ru/link/2026-06-11-coloros-ne-budet-kopirovat-liquid-glass#comments||разработчики coloros заверили, что оболочка не будет копировать дизайн liquid glass от apple
 https://trashbox.ru/link/2026-06-11-igrovoj-pk-spas-vladelca#comments||игровой компьютер спас пользователя от ранения шальной пулей
+https://trashbox.ru/link/2026-06-12-telegram-poluchil-krupnyj-apdejt#comments||приложение для часов, markdown-разметка и ии-боты: telegram получил крупный апдейт
