@@ -375,3 +375,4 @@ https://trashbox.ru/link/2026-06-12-samyj-malenkij-qr-kod#comments||учёные
 https://trashbox.ru/link/2026-06-12-stoimost-ozu-v-smartfone#comments||глава nothing: стоимость памяти составляет 50% от цены смартфона
 https://trashbox.ru/link/2026-06-12-huawei-harmonyos-7#comments||huawei представила harmonyos 7: улучшенный интерфейс, интеграция с ии и многое другое
 https://trashbox.ru/link/2026-06-12-roboty-zmei-kitaj#comments||в китае используют роботов-змей для осмотра линий электропередач
+https://trashbox.ru/link/2026-06-12-aur-linux-zarazhenie-paketov#comments||злоумышленники заразили свыше 400 пакетов arch linux вредоносным по для кражи паролей
